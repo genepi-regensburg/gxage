@@ -14,11 +14,9 @@ Workflow:
 
 ## Prerequisites
 
-Install R package Easy2 from www.genepi-regenburg.de/easy2: 
+Install R package Easy2 from www.genepi-regenburg.de/easy2 : install.packages("Easy2_version.tar.gz")
 
-install.packages("Easy2")
-
-## Usage
+## Usage in R
 
 library(Easy2)
 
