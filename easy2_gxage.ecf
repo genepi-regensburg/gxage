@@ -1,0 +1,122 @@
+#################################################################################################################
+##### EASY2-script to evaluate GxAge summary stats
+##### Easy2 package version: 1.2.0
+##### Programmer: Thomas Winkler, 2024-05-08
+##### Contact: thomas.winkler@klinik.uni-regensburg.de
+#################################################################################################################
+
+### Please DEFINE here path to output and format of the input files
+
+DEFINE	--pathOut ./results
+			--strSeparator TAB
+
+### Call here the cross-sectional (no-longitudinal, nolong) GxAge results
+
+EASYIN --fileIn bmi_gxage.ukb_crosssectional.regenie.gz
+			--acolIn cpaid;rsid;chr;pos;ea;oa;eaf;info;n;beta_unadj;se_unadj;log10p_unadj;beta_age;beta_g;se_g;log10p_g;beta_gxage;se_gxage;log10p_gxage;log10p_2df
+			--acolInClasses character;character;character;integer;character;character;numeric;numeric;numeric;numeric;numeric;numeric;numeric;numeric;numeric;numeric;numeric;numeric;numeric;numeric
+			
+## Please use following format as marker ID: cpaid = <chr>:<pos>:<a1>_<a2>; a1 and a2 being alphabetically ordered (required by bed files below)
+
+################################################################################################################
+## EASY2 Scripting interface:
+START EASY2
+
+## remove maf<0.1% variants
+CLEAN --rcdClean pmin(eaf,1-eaf)<0.001 --strCleanName numDropRareNoLong
+
+## remove imputation quality<0.80 variants
+CLEAN --rcdClean info<0.8 --strCleanName numDropLowInfo
+
+## get P values from log P values
+ADDCOL --rcdAddCol (10^(-log10p_unadj)) --colOut p_unadj
+ADDCOL --rcdAddCol (10^(-log10p_g)) --colOut p_g
+ADDCOL --rcdAddCol (10^(-log10p_gxage)) --colOut p_gxage
+ADDCOL --rcdAddCol (10^(-log10p_2df)) --colOut p_2df
+
+## remove MHC region
+CLEAN --rcdClean chr==6&pos>=27500000&pos<=34500000 --strCleanName numDropMhc1Mb
+## https://www.ncbi.nlm.nih.gov/grc/human/regions/MHC?asm=GRCh37
+
+###########################################################################
+## GC correction based on non-marginal null regions
+
+## obtain marginal regions
+INDEP --rcdCriterion p_unadj<5e-8
+		--acolPval p_unadj
+		--colInChr chr
+		--colInPos pos
+		--numPosLim 500000
+		--blnAddIndepInfo 1
+		--colInMarker cpaid
+		--strTag INDEP.overall5e8_nogc
+
+ANNOTATE --colInChr chr
+		--colInPos pos
+		--colInCoord INDEP.overall5e8_nogc.regionCoordinates
+		--numAnnotPosLim 5000000
+		--strAnnotTag marginal
+		--colOutAnnot annotMarginal5000
+
+GETNUM --rcdGetNum is.na(annotMarginal5000) --strGetNumName numVarOutsideMarginal5000
+
+GC 	--colPval p_unadj --colSE se_unadj --rcdGcCrit is.na(annotMarginal5000)
+GC 	--colPval p_g --colSE se_g --rcdGcCrit is.na(annotMarginal5000)
+GC 	--colPval p_gxage --colSE se_gxage --rcdGcCrit is.na(annotMarginal5000)
+
+###########################################################################
+#### GxAge signif variants
+
+## gw GxAge
+ADDCOL --rcdAddCol p_gxage.GC*1000000 --colOut p_gxage.GC.gwbonf
+EDITCOL --rcdEditCol ifelse(p_gxage.GC.gwbonf<1,p_gxage.GC.gwbonf,1) --colEdit p_gxage.GC.gwbonf
+
+## 2-step GxAge
+PCA2STEP --rcdStep1Crit p_unadj.GC<5e-8
+			--colStep2Pval p_gxage.GC
+			--numPcaThrs 0.995
+			--blnParal 1
+			--filePcaBed ./ukb_bed_chr<CHR>_cpaid
+			--colInChr chr
+			--colInMarker cpaid
+			--colOutPval p_gxage.GC.2stepbonf
+			--strTag PCA2STEP.overall5e8int
+
+INDEP --rcdCriterion p_gxage.GC.gwbonf<0.05|p_gxage.GC.2stepbonf<0.05
+		--acolPval p_gxage.GC
+		--colInChr chr
+		--colInPos pos
+		--numPosLim 500000
+		--fileClumpBed ./ukb_bed_chr<CHR>_cpaid
+		--numR2Thrs 0.01
+		--blnAddIndepInfo 1
+		--colInMarker cpaid
+		--strTag INDEP.int
+
+## Plots GxAge
+QQPLOT --acolQQPlot p_gxage.GC
+		--astrColour dodgerblue1
+		--blnYAxisBreak 1
+		--numPvalOffset 0.05
+		--anumCex 2;2
+		--numCexAxis 2
+		--numCexLab 2
+		--anumParMar 6.1;5.1;4.1;2.1
+		--strPlotName qq.int
+
+MHPLOT --colMHPlot p_gxage.GC
+			--colInChr chr
+			--colInPos pos
+			--numPvalOffset 0.05
+			--blnYAxisBreak 1
+			--numYAxisBreak 22
+			--anumAddPvalLine 5e-8
+			--astrAddPvalLineCol red
+			--anumAddPvalLineLty 6
+			--numWidth 1200
+			--numCexAxis 1.4
+			--strPlotName mh.int_1200
+			
+STOP EASY2
+#################################################################################################################
+#################################################################################################################
