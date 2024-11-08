@@ -22,4 +22,3 @@ library(Easy2)
 
 Easy2("easy2_gxage.ecf")
 
-
