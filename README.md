@@ -12,7 +12,7 @@ Workflow:
 6) Clumps significant variants using distance<500kb and r2>0.1
 7) Creates GxAge QQ and manhattan plot
 
-## Prerequisites
+## Prerequisites & Installation
 
 Install R package Easy2 from www.genepi-regensburg.de/software : install.packages("Easy2_<version>.tar.gz")
 
