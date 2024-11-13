@@ -1,6 +1,6 @@
 # GxAge evaluation
 
-This ecf script allows to evaluate genome-wide GxAge summary stats using the R package Easy2 (accesible at www.genepi-regenburg.de/easy2)
+This ecf script allows to evaluate genome-wide GxAge summary stats (as obtained by regenie interaction testing) using the R package Easy2 (accesible at www.genepi-regensburg.de/software)
 
 ## Features
 Workflow: 
