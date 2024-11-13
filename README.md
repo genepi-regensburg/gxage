@@ -17,7 +17,11 @@ Workflow:
 Install R package Easy2 from www.genepi-regensburg.de/software : install.packages("Easy2_<version>.tar.gz")
 
 ## Usage in R
+```R
+library(Easy2)
+Easy2("easy2_gxage.ecf")
+```
 
-> library(Easy2)
-> Easy2("easy2_gxage.ecf")
+
+
 
