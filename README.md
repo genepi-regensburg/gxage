@@ -22,6 +22,7 @@ library(Easy2)
 Easy2("easy2_gxage.ecf")
 ```
 
-
+## License
+This analysis code is licensed under a Creative Commons Attribution 4.0 International License. 
 
 
